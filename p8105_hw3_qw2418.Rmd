@@ -15,8 +15,6 @@ library(p8105.datasets)
 
 ## Problem 1
 
-## Problem 1
-
 1. Read in the data
 
 ```{r}
