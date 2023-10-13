@@ -17,7 +17,7 @@ library(p8105.datasets)
 
 ## Problem 1
 
-#### Read in the data
+1. Read in the data
 
 ```{r}
 
@@ -28,9 +28,9 @@ instacart =
   as_tibble()
 ```
 
-#### Answer questions about the data
+2. Answer questions about the data
 
-This dataset contains `r nrow(instacart)` rows and `r ncol(instacart)` columns, with each row resprenting a single product from an instacart order. Variables include identifiers for user, order, and product; the order in which each product was added to the cart. There are several order-level variables, describing the day and time of the order, and number of days since prior order. Then there are several item-specific variables, describing the product name (e.g. Yogurt, Avocado), department (e.g. dairy and eggs, produce), and aisle (e.g. yogurt, fresh fruits), and whether the item has been ordered by this user in the past. In total, there are `r instacart |> select(product_id) |> distinct() |> count()` products found in `r instacart |> select(user_id, order_id) |> distinct() |> count()` orders from `r instacart |> select(user_id) |> distinct() |> count()` distinct users.
+This dataset contains `r nrow(instacart)` rows and `r ncol(instacart)` columns, with each row  a single product from an instacart order. Variables are identifiers for user, order, and product; the order in which each product was added to the cart. There are several order-level variables, describing the day and time of the order, and number of days since prior order. Then there are several item-specific variables, describing the product name (e.g. Yogurt, Avocado), department (e.g. dairy and eggs, produce), and aisle (e.g. yogurt, fresh fruits), and whether the item has been ordered by this user in the past. In total, there are `r instacart |> select(product_id) |> distinct() |> count()` products found in `r instacart |> select(user_id, order_id) |> distinct() |> count()` orders from `r instacart |> select(user_id) |> distinct() |> count()` distinct users.
 
 Below is a table summarizing the number of items ordered from aisle. In total, there are 134 aisles, with fresh vegetables and fresh fruits holding the most items ordered by far.
 
@@ -229,7 +229,7 @@ age_distribution_plot <- nhanes |>
   ggplot(aes(x = education, y = age, fill = sex)) +
   geom_boxplot() +
   labs(x = "Education", y = "Age") +
-  scale_fill_manual(values = c("male" = "blue", "female" = "red")) +
+  scale_fill_manual(values = c("male" = "purple", "female" = "green")) +
   facet_wrap(~sex)
 
 print(age_distribution_plot)
@@ -250,3 +250,44 @@ From the male groups, we can see that when the education level becomes higher, t
 3. Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate across minutes to create a total activity variable for each participant. Plot these total activities (y-axis) against age (x-axis); your plot should compare men to women and have separate panels for each education level. Include a trend line or a smooth to illustrate differences. Comment on your plot.
 
 
+```{r}
+
+nhanes |>
+  group_by(seqn, education, sex, age) |>
+  summarise(n = sum(MIMS)) |>
+  ggplot(aes(x = age, y = n, color = sex)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  facet_grid(. ~ education) +
+  labs(x = "Age", y = "Total Activity") +
+  scale_color_manual(values = c("male" = "purple", "female" = "green"))
+
+
+```
+
+* comment: 
+From the plot, we can see that the overall total activity in three different education levels all show a decreasing trend when age increased in both male and female groups. 
+
+In less than high school education group, female group has a higher total activity when age is less than 40. However, between age 40 to age 80, the male group has higher total activity. For both sex, they have a peak at around age 60.
+
+In the equivalent to high school education, the trend of the female group has a higher total activity than the male group. For both sex groups, they have their peak at age 40.
+
+In the more than high school education group, he trend of the female group has a higher total activity than the male group. 
+
+4. Accelerometer data allows the inspection activity over the course of the day. Make a three-panel plot that shows the 24-hour activity time courses for each education level and use color to indicate sex. Describe in words any patterns or conclusions you can make based on this graph; including smooth trends may help identify differences.
+
+```{r}
+nhanes |>
+  ggplot(aes(x = minutes, y = MIMS, color = sex)) +
+  geom_line(alpha = 0.2) +
+  geom_smooth(aes(group = sex), se = FALSE) +
+  facet_wrap(~ education) +
+  labs(x = "Time of Day", y = "MIMS (Activity)") +
+  scale_color_manual(values = c("male" = "purple", "female" = "green"))
+
+
+```
+
+* Patterns: 
+
+From the graph, it is clear that both age groups have the similar trend of MIMS activity across the time of day in less than education and equivalent to education groups, in which they have their minimum value in the middle time of the day. In the more than education group, although male and female group also share the similar trend as the other two education groups with their minimum value of MIMS activities in the middle time of the day, there are some slight difference between the two gender groups. The male group has higher MIMS activities in the early times of the day and the late times of the day, which the female group has higher MIMS activities in the middle times of the day. 
