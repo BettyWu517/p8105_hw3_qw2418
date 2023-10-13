@@ -10,13 +10,74 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
+library(p8105.datasets)
 ```
 
 ## Problem 1
 
+## Problem 1
+
+#### Read in the data
+
 ```{r}
-library(p8105.datasets)
+
 data("instacart")
+
+instacart = 
+  instacart |> 
+  as_tibble()
+```
+
+#### Answer questions about the data
+
+This dataset contains `r nrow(instacart)` rows and `r ncol(instacart)` columns, with each row resprenting a single product from an instacart order. Variables include identifiers for user, order, and product; the order in which each product was added to the cart. There are several order-level variables, describing the day and time of the order, and number of days since prior order. Then there are several item-specific variables, describing the product name (e.g. Yogurt, Avocado), department (e.g. dairy and eggs, produce), and aisle (e.g. yogurt, fresh fruits), and whether the item has been ordered by this user in the past. In total, there are `r instacart |> select(product_id) |> distinct() |> count()` products found in `r instacart |> select(user_id, order_id) |> distinct() |> count()` orders from `r instacart |> select(user_id) |> distinct() |> count()` distinct users.
+
+Below is a table summarizing the number of items ordered from aisle. In total, there are 134 aisles, with fresh vegetables and fresh fruits holding the most items ordered by far.
+
+```{r}
+instacart |> 
+  count(aisle) |> 
+  arrange(desc(n))
+```
+
+Next is a plot that shows the number of items ordered in each aisle. Here, aisles are ordered by ascending number of items.
+
+```{r}
+instacart |> 
+  count(aisle) |> 
+  filter(n > 10000) |> 
+  mutate(aisle = fct_reorder(aisle, n)) |> 
+  ggplot(aes(x = aisle, y = n)) + 
+  geom_point() + 
+  labs(title = "Number of items ordered in each aisle") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+Our next table shows the three most popular items in aisles `baking ingredients`, `dog food care`, and `packaged vegetables fruits`, and includes the number of times each item is ordered in your table.
+
+```{r}
+instacart |> 
+  filter(aisle %in% c("baking ingredients", "dog food care", "packaged vegetables fruits")) |>
+  group_by(aisle) |> 
+  count(product_name) |> 
+  mutate(rank = min_rank(desc(n))) |> 
+  filter(rank < 4) |> 
+  arrange(desc(n)) |>
+  knitr::kable()
+```
+
+Finally is a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week. This table has been formatted in an untidy manner for human readers. Pink Lady Apples are generally purchased slightly earlier in the day than Coffee Ice Cream, with the exception of day 5.
+
+```{r}
+instacart |>
+  filter(product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")) |>
+  group_by(product_name, order_dow) |>
+  summarize(mean_hour = mean(order_hour_of_day)) |>
+  pivot_wider(
+    names_from = order_dow, 
+    values_from = mean_hour) |>
+  knitr::kable(digits = 2)
 ```
 
 
@@ -35,10 +96,13 @@ library(p8105.datasets)
 data("brfss_smart2010")
 brfss = brfss_smart2010 |> 
   janitor::clean_names() |>
-  filter(topic == "Overall Health", response == "Excellent" | response == "Poor") |>
-  mutate(forcats::fct_relevel(response, "Poor", "Excellent")) |> 
+  filter(topic == "Overall Health") |>
+  mutate(response = fct_relevel(response, "Poor", "Fair", "Good", "Very good", "Excellent")) |> 
   rename(state = locationabbr, county = locationdesc)
-head(brfss)
+
+brfss
+#brfss = brfss_ori |> filter(response == "Excellent" | response == "Poor")
+#head(brfss_ori)
 ```
 
 
@@ -50,8 +114,8 @@ state_2002 <- brfss |> filter(year == "2002")
 
 state_2002_7 = state_2002 |> 
   group_by(state) |>
-  count(state, name = "n_obs") |>
-  filter(n_obs >= 7) 
+  summarise(occurences = n_distinct(county)) |>
+  filter(occurences >= 7)
 
 state_2002_7
 
@@ -60,15 +124,15 @@ state_2010 <- brfss |> filter(year == "2010")
 
 state_2010_7 = state_2010 |> 
   group_by(state) |>
-  count(state, name = "n_obs") |>
-  filter(n_obs >= 7) 
+  summarise(occurences = n_distinct(county)) |>
+  filter(occurences >= 7)
 
 state_2010_7
 ```
 
-- According to the result, we know that in 2002, the states CO, CT, FL, HI, MA, MD, MI, MN, NC, NH, NJ, NY, OH, PA, RI, UT, and WA were observed at 7 or more locations. 
+- According to the result, we know that in 2002, the states CT, FL, MA, NC, NJ, PA were observed at 7 or more locations. 
 
-- In 2010, the states "CA" "CO" "CT" "FL" "GA" "HI" "ID" "KS" "LA" "MA" "MD" "ME" "MI" "MN" "NC" "NE" "NH" "NJ" "NM" "NY" "OH" "OR" "PA" "RI" "SC" "TN" "TX" "UT" "VT" "WA" were observed at 7 or more locations. 
+- In 2010, the states CA, CO, FL, MA, MD, NC, NE, NJ, NY, PA, SC, TX, WA were observed at 7 or more locations. 
 
 
 2. Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data_value across locations within a state. Make a “spaghetti” plot of this average value over time within a state (that is, make a plot showing a line for each state across years – the geom_line geometry and group aesthetic will help).
@@ -93,6 +157,96 @@ ggplot(average_data_by_state, aes(x = year, y = average, group = state, color = 
     y = "Average Data Value",
     title = "Average Data Value Accross Year In Different States"
   )
+```
 
+3. Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State.
+
+
+```{r}
+brfss |>
+  filter(year %in% c(2006, 2010), 
+         state == "NY", 
+         response %in% c("Poor", "Fair", "Good", "Very good", "Excellent")) |>
+         ggplot(aes(x = response, y = data_value)) +
+         geom_boxplot() +
+         facet_wrap(~year, ncol = 2) +
+          labs(
+        x = "Data Value",
+        y = "Frequency",
+        title = "Distribution of Data Value by Response in NY State (2006 and 2010)",
+        fill = "Response"
+  )
 
 ```
+
+## Problem 3
+
+1. Load, tidy, merge, and otherwise organize the data sets. Your final dataset should include all originally observed variables; exclude participants less than 21 years of age, and those with missing demographic data; and encode data with reasonable variable classes (i.e. not numeric, and using factors with the ordering of tables and plots in mind).
+
+```{r}
+accel = read_csv("data/nhanes_accel.csv") |>
+  janitor::clean_names() |>
+  pivot_longer(min1:min1440,
+               names_prefix = "min",
+               names_to = "minutes",
+               values_to = "MIMS")
+
+accel
+  
+
+demo = read_csv("data/nhanes_covar.csv", skip = 4) |>
+  janitor::clean_names() |>
+  drop_na() |>
+  filter(age >= 21) |>
+  mutate(
+    sex = recode(sex, "1" = "male", "2" = "female"),
+    education = recode(education, "1" = "less than high school", "2" = "high school", "3" = "more than high school"))
+
+redemo = demo |>
+    mutate(sex = fct_relevel(sex, "male", "female"),
+           education = fct_relevel(education, "less than high school", "high school", "more than high school"))
+
+redemo
+
+nhanes = left_join(redemo,accel,by = "seqn")
+```
+
+2. Produce a reader-friendly table for the number of men and women in each education category, and create a visualization of the age distributions for men and women in each education category. Comment on these items.
+
+```{r}
+nhanes |> 
+  group_by(sex, education) |>
+  summarise(total_num = n()/1440) |>
+  pivot_wider(
+    names_from = sex,
+    values_from = total_num
+  )  |>
+  knitr::kable(caption = "Summary of Participants by Sex and Education")
+
+# Visual distribution
+
+age_distribution_plot <- nhanes |>
+  ggplot(aes(x = education, y = age, fill = sex)) +
+  geom_boxplot() +
+  labs(x = "Education", y = "Age") +
+  scale_fill_manual(values = c("male" = "blue", "female" = "red")) +
+  facet_wrap(~sex)
+
+print(age_distribution_plot)
+
+```
+
+* Comment: 
+
+On this visualization, it is clear that in the education level of less than high school, both female and male groups have similar distribution including their mean age at around 60. The female group has their mean age slightly larger than the male's group.
+
+In equivalent to high school education, female group has mean age larger than 60, which is higher than the mean age of the male group's distribution (slightly above 50).
+
+In the more than high school education level, both female and male groups have similar distributions of age, with male group's mean age (around 42) slightly higher than those of the female group (around 41). 
+
+From the male groups, we can see that when the education level becomes higher, the mean age of the male's group becomes younger. From the female groups, we observe that for lower than high school and equivalent to high school groups, the mean age are similar, which is much larger than the mean age of higher than high school education level. 
+
+
+3. Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate across minutes to create a total activity variable for each participant. Plot these total activities (y-axis) against age (x-axis); your plot should compare men to women and have separate panels for each education level. Include a trend line or a smooth to illustrate differences. Comment on your plot.
+
+
