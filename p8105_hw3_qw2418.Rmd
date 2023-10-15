@@ -279,11 +279,12 @@ In the more than high school education group, he trend of the female group has a
 
 ```{r}
 nhanes |>
+  mutate(minutes = as.numeric(minutes)) |>
   ggplot(aes(x = minutes, y = MIMS, color = sex)) +
   geom_line(alpha = 0.2) +
   geom_smooth(aes(group = sex), se = FALSE) +
   facet_wrap(~ education) +
-  labs(x = "Time of Day", y = "MIMS (Activity)") +
+  labs(x = "Minutes", y = "MIMS (Activity)") +
   scale_color_manual(values = c("male" = "purple", "female" = "green"))
 
 
@@ -291,4 +292,4 @@ nhanes |>
 
 * Patterns: 
 
-From the graph, it is clear that both age groups have the similar trend of MIMS activity across the time of day in less than education and equivalent to education groups, in which they have their minimum value in the middle time of the day. In the more than education group, although male and female group also share the similar trend as the other two education groups with their minimum value of MIMS activities in the middle time of the day, there are some slight difference between the two gender groups. The male group has higher MIMS activities in the early times of the day and the late times of the day, which the female group has higher MIMS activities in the middle times of the day. 
+From the graph, it is clear that both age groups have the similar trend of MIMS activity across the time of day in less than education and equivalent to education groups, in which they have their minimum value in the early  time of the day. In the more than education group, although male and female group also share the similar trend as the other two education groups with their minimum value of MIMS activities in the middle time of the day, there are some slight difference between the two gender groups. The female group has higher MIMS activities in the early to middle times of the day, and the male group has higher MIMS activities in the late times of the day. 
