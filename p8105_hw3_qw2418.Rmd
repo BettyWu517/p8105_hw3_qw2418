@@ -227,11 +227,11 @@ nhanes |>
 # Visual distribution
 
 age_distribution_plot <- nhanes |>
-  ggplot(aes(x = education, y = age, fill = sex)) +
+  ggplot(aes(x = sex, y = age, fill = sex)) +
   geom_boxplot() +
-  labs(x = "Education", y = "Age") +
+  labs(x = "Sex", y = "Age") +
   scale_fill_manual(values = c("male" = "purple", "female" = "green")) +
-  facet_wrap(~sex)
+  facet_wrap(~education)
 
 print(age_distribution_plot)
 
